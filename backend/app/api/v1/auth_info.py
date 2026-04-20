@@ -85,14 +85,33 @@ async def get_current_user_info(
         (user_metadata, app_metadata) = await metadata_task
         departments = await departments_task
 
+        # Resolve tenant_id first (needed for properties and permissions)
+        tenant_id = await TenantResolver.resolve_tenant_id(user_id=user.id, user_email=user.email)
+        logger.info(f"AUTH /me: Fresh tenant lookup for {user.email}: {tenant_id}")
+
+        # Fetch properties for this user
+        async def fetch_properties():
+            if not tenant_id:
+                return []
+            try:
+                result = (
+                    supabase.service.table('all_properties')
+                    .select('id, name, city')
+                    .eq('tenant_id', tenant_id)
+                    .eq('status', 'active')
+                    .execute()
+                )
+                return result.data or []
+            except Exception as e:
+                logger.error(f"Error fetching properties for user {user.id}: {e}")
+                return []
+
+        properties = await fetch_properties()
+
         # Get base permissions
         permissions = [
             {"section": p.section, "action": p.action} for p in (user.permissions or [])
         ]
-        
-        # This ensures /auth/me returns correct tenant like other endpoints
-        tenant_id = await TenantResolver.resolve_tenant_id(user_id=user.id, user_email=user.email)
-        logger.info(f"AUTH /me: Fresh tenant lookup for {user.email}: {tenant_id}")
         
         # Add smart view permissions if user has access
         if tenant_id and not user.is_admin:
@@ -140,6 +159,7 @@ async def get_current_user_info(
             "is_admin": user.is_admin,
             "tenant_id": tenant_id,
             "permissions": permissions,
+            "properties": properties,
             "cities": list(user.cities or []),
             "departments": departments,
             "user_metadata": user_metadata,

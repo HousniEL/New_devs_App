@@ -77,7 +77,7 @@ class Settings(BaseSettings):
     debug: bool = True
     
     # Optional fields for compatibility with existing imports
-    frontend_url: str = "http://localhost:3000"
+    frontend_url: str = "http://localhost:3001"
     backend_url: str = "http://localhost:8000"
     cors_origins: List[str] = ["*"]
 

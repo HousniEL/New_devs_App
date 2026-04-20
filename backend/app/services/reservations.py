@@ -62,6 +62,11 @@ async def calculate_total_revenue(property_id: str, tenant_id: str) -> Dict[str,
                     "property_id": property_id, 
                     "tenant_id": tenant_id
                 })
+
+                print("==============================")
+                print(result)
+                print("==============================")
+
                 row = result.fetchone()
                 
                 if row:

@@ -69,7 +69,7 @@ async def get_company_settings(
     try:
         # Get tenant_id
         tenant_id = current_user.tenant_id
-        
+
         # Check cache first
         cache_key = f"company_settings:{tenant_id}"
         if cache_key in company_settings_cache:
@@ -80,9 +80,9 @@ async def get_company_settings(
             else:
                 # Cache expired, remove it
                 del company_settings_cache[cache_key]
-        
+
         logger.info(f"Fetching company settings from database for user {current_user.email} (tenant: {tenant_id})")
-        
+
         if not tenant_id:
             # Fallback: get from user_tenants using service role to avoid RLS edge cases
             tenant_result = (
@@ -94,6 +94,8 @@ async def get_company_settings(
                 .maybe_single()
                 .execute()
             )
+
+            print(tenant_result)
             if getattr(tenant_result, 'data', None):
                 tenant_id = tenant_result.data.get('tenant_id')
             else:
